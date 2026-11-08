@@ -171,6 +171,32 @@ class JadwalDokter extends Model
         return $stmt->fetchAll();
     }
 
+    public function jadwalHariIni($doctorId = null)
+    {
+        $today = date('Y-m-d');
+        $hari = $this->weekdayForDate($today);
+        if (!$hari) {
+            return [];
+        }
+
+        $sql = "SELECT j.*, u.nama AS nama_dokter, u.is_active AS status_akun
+                FROM jadwal_dokter j
+                JOIN users u ON u.id_user = j.id_user
+                WHERE j.hari = ? AND j.is_active = 1 AND u.role = 'dokter' AND u.is_active = 1
+                AND u.aktif_mulai <= ? AND u.aktif_sampai >= ?";
+        $params = [$hari, $today, $today];
+
+        if ($doctorId) {
+            $sql .= " AND j.id_user = ?";
+            $params[] = (int) $doctorId;
+        }
+
+        $sql .= " ORDER BY j.jam_mulai, u.nama";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
     public function doctorCanHandle($doctorId, $poli, $date = null)
     {
         $doctors = $date === null
@@ -184,6 +210,25 @@ class JadwalDokter extends Model
         $stmt = $this->db->prepare("SELECT COUNT(*) FROM users WHERE id_user = ? AND role = 'dokter'");
         $stmt->execute([(int) $id]);
         return (int) $stmt->fetchColumn() > 0;
+    }
+
+    /**
+     * Active jadwal row for a doctor (poli/hari/jam/lokasi).
+     */
+    public function doctorsActiveFor($doctorId)
+    {
+        $stmt = $this->db->prepare(
+            "SELECT j.poli, j.hari, j.jam_mulai, j.jam_selesai, j.lokasi
+             FROM jadwal_dokter j
+             JOIN users u ON u.id_user = j.id_user
+             WHERE j.id_user = ? AND j.is_active = 1
+               AND u.is_active = 1 AND u.aktif_mulai <= ? AND u.aktif_sampai >= ?
+             ORDER BY FIELD(j.hari, 'Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'), j.jam_mulai
+             LIMIT 1"
+        );
+        $today = date('Y-m-d');
+        $stmt->execute([(int) $doctorId, $today, $today]);
+        return $stmt->fetch();
     }
 
     public function hasConflict($idUser, $hari, $start, $end, $excludeId = 0)

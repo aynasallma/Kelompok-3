@@ -1,8 +1,15 @@
 <?php require __DIR__ . '/../layouts/header.php'; ?>
 
-<div class="toolbar">
-    <p class="muted">Akun yang melewati masa aktif otomatis masuk ke tabel pengguna nonaktif.</p>
-    <a class="btn btn-primary" href="<?= route('pengguna/create') ?>">+ Tambah Pengguna</a>
+<div class="page-header">
+    <div class="page-header-text">
+        <h2>Manajemen Pengguna</h2>
+        <p class="muted">Kelola akun staf medis, dokter, apoteker, dan hak akses sistem.</p>
+    </div>
+    <div class="page-header-actions">
+        <a class="btn btn-primary" href="<?= route('pengguna/create') ?>">
+            <?= icon('plus', '', 16) ?> Tambah Pengguna
+        </a>
+    </div>
 </div>
 
 <div class="panel">
@@ -25,15 +32,21 @@
                         <td><?= e($item['username']) ?></td>
                         <td><?= e(ucfirst($item['role'])) ?></td>
                         <td><?= tgl($item['aktif_mulai']) ?> - <?= tgl($item['aktif_sampai']) ?></td>
-                        <td>
+                        <td class="actions">
                             <div class="user-table-actions">
-                                <a class="btn btn-small" href="<?= route('pengguna/edit/' . (int) $item['id_user']) ?>">Edit</a>
+                                <a class="icon-btn icon-btn-edit" href="<?= route('pengguna/edit/' . (int) $item['id_user']) ?>" title="Edit Pengguna">
+                                    <?= icon('edit-3', '', 15) ?>
+                                </a>
                                 <form method="post" action="<?= route('pengguna/nonaktifkan/' . (int) $item['id_user']) ?>" class="inline"
                                       data-confirm="Nonaktifkan pengguna ini?">
                                     <?= csrf_field() ?>
-                                    <button class="btn btn-small">Nonaktifkan</button>
+                                    <button class="icon-btn icon-btn-warning" type="submit" title="Nonaktifkan Pengguna">
+                                        <?= icon('power', '', 15) ?>
+                                    </button>
                                 </form>
-                                <button class="btn btn-small btn-danger" type="button" disabled title="Nonaktifkan pengguna terlebih dahulu">Hapus</button>
+                                <button class="icon-btn icon-btn-danger" type="button" disabled title="Nonaktifkan pengguna terlebih dahulu">
+                                    <?= icon('trash', '', 15) ?>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -72,30 +85,40 @@
                         <td><?= e(ucfirst($item['role'])) ?></td>
                         <td><?= tgl($item['aktif_mulai']) ?> - <?= tgl($item['aktif_sampai']) ?></td>
                         <td><span class="status <?= $statusClass ?>"><?= e($status) ?></span></td>
-                        <td>
+                        <td class="actions">
                             <div class="user-table-actions">
-                                <a class="btn btn-small" href="<?= route('pengguna/edit/' . (int) $item['id_user']) ?>">Edit</a>
+                                <a class="icon-btn icon-btn-edit" href="<?= route('pengguna/edit/' . (int) $item['id_user']) ?>" title="Edit Pengguna">
+                                    <?= icon('edit-3', '', 15) ?>
+                                </a>
                                 <?php if ((int) $item['is_active'] === 0): ?>
                                     <form method="post" action="<?= route('pengguna/aktifkan/' . (int) $item['id_user']) ?>" class="inline"
                                           data-confirm="Aktifkan kembali pengguna ini?">
                                         <?= csrf_field() ?>
-                                        <button class="btn btn-small btn-primary" <?= !$dateEligible ? 'disabled title="Perbarui masa aktif terlebih dahulu"' : '' ?>>Aktifkan</button>
+                                        <button class="icon-btn icon-btn-success" type="submit" <?= !$dateEligible ? 'disabled title="Perbarui masa aktif terlebih dahulu"' : 'title="Aktifkan Pengguna"' ?>>
+                                            <?= icon('user-check', '', 15) ?>
+                                        </button>
                                     </form>
                                 <?php else: ?>
                                     <form method="post" action="<?= route('pengguna/nonaktifkan/' . (int) $item['id_user']) ?>" class="inline"
                                           data-confirm="Nonaktifkan pengguna ini agar dapat dihapus?">
                                         <?= csrf_field() ?>
-                                        <button class="btn btn-small">Nonaktifkan</button>
+                                        <button class="icon-btn icon-btn-warning" type="submit" title="Nonaktifkan Pengguna">
+                                            <?= icon('power', '', 15) ?>
+                                        </button>
                                     </form>
                                 <?php endif; ?>
                                 <?php if ((int) $item['is_active'] === 0): ?>
                                     <form method="post" action="<?= route('pengguna/delete/' . (int) $item['id_user']) ?>" class="inline"
                                           data-confirm="Hapus pengguna ini secara permanen?">
                                         <?= csrf_field() ?>
-                                        <button class="btn btn-small btn-danger">Hapus</button>
+                                        <button class="icon-btn icon-btn-danger" type="submit" title="Hapus Pengguna Permanen">
+                                            <?= icon('trash', '', 15) ?>
+                                        </button>
                                     </form>
                                 <?php else: ?>
-                                    <button class="btn btn-small btn-danger" type="button" disabled title="Nonaktifkan pengguna terlebih dahulu">Hapus</button>
+                                    <button class="icon-btn icon-btn-danger" type="button" disabled title="Nonaktifkan pengguna terlebih dahulu">
+                                        <?= icon('trash', '', 15) ?>
+                                    </button>
                                 <?php endif; ?>
                             </div>
                         </td>

@@ -116,6 +116,7 @@ class PasienController extends Controller
 
         $data = $this->input();
         if ($error = $this->validate($data)) {
+            set_old($_POST);
             flash('error', $error);
             $this->redirect('/index.php?url=pasien/create');
         }
@@ -137,7 +138,7 @@ class PasienController extends Controller
         }
 
         $this->view('pasien/form', [
-            'title'  => 'Edit Pasien',
+            'title'  => 'Edit Data Pasien',
             'item'   => $item,
             'action' => route('pasien/update/' . $item['id_pasien'])
         ]);
@@ -151,6 +152,7 @@ class PasienController extends Controller
         $id = (int) $id;
         $data = $this->input();
         if ($error = $this->validate($data)) {
+            set_old($_POST);
             flash('error', $error);
             $this->redirect('/index.php?url=pasien/edit/' . $id);
         }
@@ -264,10 +266,19 @@ class PasienController extends Controller
             return 'Nama pasien wajib diisi.';
         }
         if (!in_array($data['jenis_kelamin'], ['L', 'P'], true)) {
-            return 'Jenis kelamin tidak valid.';
+            return 'Pilih jenis kelamin yang valid.';
         }
         if (!strtotime($data['tanggal_lahir'])) {
             return 'Tanggal lahir tidak valid.';
+        }
+        if ($data['tanggal_lahir'] > date('Y-m-d')) {
+            return 'Tanggal lahir tidak boleh di masa depan.';
+        }
+        if ($data['no_hp'] === '') {
+            return 'Nomor HP / kontak pasien wajib diisi.';
+        }
+        if (!preg_match('/^[0-9+ -]{8,20}$/', $data['no_hp'])) {
+            return 'Format nomor HP tidak valid (gunakan minimal 8 angka/karakter telepon).';
         }
         return null;
     }

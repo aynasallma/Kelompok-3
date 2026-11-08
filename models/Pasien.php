@@ -129,6 +129,47 @@ class Pasien extends Model
         return $stmt->fetchAll();
     }
 
+    public function countTotalKunjungan()
+    {
+        return (int) $this->db->query("SELECT COUNT(*) FROM kunjungan")->fetchColumn();
+    }
+
+    public function countKunjunganHariIni($doctorId = null)
+    {
+        $sql = "SELECT COUNT(*) FROM kunjungan WHERE tanggal_kunjungan = CURDATE()";
+        $params = [];
+        if ($doctorId !== null) {
+            $sql .= " AND id_dokter = ?";
+            $params[] = (int) $doctorId;
+        }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function countKunjunganStatusHariIni($status, $doctorId = null)
+    {
+        $sql = "SELECT COUNT(*) FROM kunjungan WHERE tanggal_kunjungan = CURDATE() AND status = ?";
+        $params = [$status];
+        if ($doctorId !== null) {
+            $sql .= " AND id_dokter = ?";
+            $params[] = (int) $doctorId;
+        }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function statistikKunjunganMingguan()
+    {
+        $sql = "SELECT tanggal_kunjungan, COUNT(*) AS jumlah
+                FROM kunjungan
+                WHERE tanggal_kunjungan >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+                GROUP BY tanggal_kunjungan
+                ORDER BY tanggal_kunjungan ASC";
+        return $this->db->query($sql)->fetchAll();
+    }
+
     public function kunjunganHariIni($doctorId = null)
     {
         $sql = "SELECT k.*, p.nama_pasien, p.no_rm, rm.id_rekam_medis

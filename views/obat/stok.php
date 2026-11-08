@@ -8,12 +8,12 @@
     <form method="post" action="<?= route('obat/tambahStok/' . (int) $item['id_obat']) ?>" class="row-form staff-inline-grid">
         <?= csrf_field() ?>
         <div>
-            <label>Jumlah Masuk</label>
-            <input type="number" name="jumlah" min="1" required>
+            <label>Jumlah Stok Masuk <span class="required">*</span></label>
+            <input type="number" name="jumlah" min="1" placeholder="Minimal 1" required>
         </div>
         <div>
-            <label>Keterangan</label>
-            <input type="text" name="keterangan" placeholder="Contoh: Pembelian dari supplier">
+            <label>Keterangan Tambahan</label>
+            <input type="text" name="keterangan" placeholder="Contoh: Pengadaan dari PBF / Supplier">
         </div>
         <div>
             <button class="btn btn-primary">Tambah Stok</button>

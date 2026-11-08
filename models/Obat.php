@@ -102,8 +102,25 @@ class Obat extends Model
         }
     }
 
+    public function countPenggunaanResep($id)
+    {
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM detail_resep WHERE id_obat = ?");
+        $stmt->execute([(int) $id]);
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function countAll()
+    {
+        return (int) $this->db->query("SELECT COUNT(*) FROM obat")->fetchColumn();
+    }
+
     public function delete($id)
     {
+        $count = $this->countPenggunaanResep($id);
+        if ($count > 0) {
+            throw new Exception("Obat tidak dapat dihapus karena telah digunakan dalam {$count} resep medis demi integritas data.");
+        }
+
         $this->db->beginTransaction();
         try {
             $stmt = $this->db->prepare("DELETE FROM transaksi_stok WHERE id_obat = ?");

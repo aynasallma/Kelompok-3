@@ -38,6 +38,18 @@ class User extends Model
             && $user['aktif_sampai'] >= $today;
     }
 
+    public function countByRole($role)
+    {
+        $today = date('Y-m-d');
+        $stmt = $this->db->prepare(
+            "SELECT COUNT(*) FROM users
+             WHERE role = ? AND is_active = 1
+             AND aktif_mulai <= ? AND aktif_sampai >= ?"
+        );
+        $stmt->execute([$role, $today, $today]);
+        return (int) $stmt->fetchColumn();
+    }
+
     public function countAll()
     {
         return (int) $this->db->query("SELECT COUNT(*) FROM users")->fetchColumn();
@@ -123,6 +135,20 @@ class User extends Model
         );
         $stmt->execute([$today, $today]);
         return (int) $stmt->fetchColumn();
+    }
+
+    public function doctorsActive()
+    {
+        $today = date('Y-m-d');
+        $stmt = $this->db->prepare(
+            "SELECT id_user, nama, username, role, is_active
+             FROM users
+             WHERE role = 'dokter' AND is_active = 1
+             AND aktif_mulai <= ? AND aktif_sampai >= ?
+             ORDER BY nama"
+        );
+        $stmt->execute([$today, $today]);
+        return $stmt->fetchAll();
     }
 
     public function auditTerbaru($limit = 10)

@@ -37,6 +37,7 @@ class PenggunaController extends Controller
         $this->mustPost();
         $data = $this->input();
         if ($error = $this->validate($data, true)) {
+            set_old($_POST);
             flash('error', $error);
             $this->redirect('/index.php?url=pengguna/create');
         }
@@ -47,7 +48,8 @@ class PenggunaController extends Controller
                 $data['aktif_mulai'], $data['aktif_sampai']
             );
         } catch (PDOException $e) {
-            flash('error', 'Username sudah digunakan.');
+            set_old($_POST);
+            flash('error', 'Username "' . $data['username'] . '" sudah digunakan. Silakan gunakan username lain.');
             $this->redirect('/index.php?url=pengguna/create');
         }
 
@@ -85,6 +87,7 @@ class PenggunaController extends Controller
 
         $data = $this->input();
         if ($error = $this->validate($data, false)) {
+            set_old($_POST);
             flash('error', $error);
             $this->redirect('/index.php?url=pengguna/edit/' . $id);
         }

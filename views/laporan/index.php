@@ -1,14 +1,21 @@
 <?php require __DIR__ . '/../layouts/header.php'; ?>
 
+<div class="page-header">
+    <div class="page-header-text">
+        <h2>Laporan Kunjungan &amp; Pelayanan</h2>
+        <p class="muted">Rekapitulasi kunjungan pasien, rekam medis, dan transaksi resep pada rentang tanggal tertentu.</p>
+    </div>
+</div>
+
 <div class="panel report-filter-panel">
     <form method="get" action="<?= BASE_URL ?>/index.php" class="row-form staff-inline-grid">
         <input type="hidden" name="url" value="laporan">
         <div>
-            <label for="report-from">Dari tanggal</label>
+            <label for="report-from">Dari tanggal <span class="required">*</span></label>
             <input id="report-from" type="date" name="from" value="<?= e($from) ?>" required>
         </div>
         <div>
-            <label for="report-to">Sampai tanggal</label>
+            <label for="report-to">Sampai tanggal <span class="required">*</span></label>
             <input id="report-to" type="date" name="to" value="<?= e($to) ?>" required>
         </div>
         <button class="btn btn-primary">Tampilkan laporan</button>

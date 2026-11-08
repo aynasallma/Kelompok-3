@@ -29,6 +29,7 @@ class JadwalController extends Controller
             : $this->jadwal->all($doctorId, $isAdmin || $doctorId !== null);
         $this->view('jadwal/index', [
             'title' => 'Jadwal Dokter',
+            'activeNav' => $isPublic ? 'jadwal' : '',
             'items' => $items,
             'isAdmin' => $isAdmin,
             'isDoctor' => $isDoctor,
@@ -66,6 +67,7 @@ class JadwalController extends Controller
         $this->mustPost();
         $data = $this->input();
         if ($error = $this->validate($data)) {
+            set_old($_POST);
             flash('error', $error);
             $this->redirect('/index.php?url=jadwal/create');
         }
@@ -103,6 +105,7 @@ class JadwalController extends Controller
         }
         $data = $this->input();
         if ($error = $this->validate($data, $id)) {
+            set_old($_POST);
             flash('error', $error);
             $this->redirect('/index.php?url=jadwal/edit/' . $id);
         }

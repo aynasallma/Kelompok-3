@@ -23,12 +23,28 @@ class ObatController extends Controller
         ]);
     }
 
+    public function show($id = 0)
+    {
+        $item = $this->obat->find((int) $id);
+        if (!$item) {
+            flash('error', 'Data obat tidak ditemukan.');
+            $this->redirect('/index.php?url=obat');
+        }
+
+        $this->view('obat/show', [
+            'title'        => 'Detail Obat: ' . $item['nama_obat'],
+            'item'         => $item,
+            'riwayat'      => $this->obat->riwayat($item['id_obat'], 15),
+            'jumlahResep'  => $this->obat->countPenggunaanResep($item['id_obat'])
+        ]);
+    }
+
     public function create()
     {
         require_role('admin', 'apoteker');
 
         $this->view('obat/form', [
-            'title'  => 'Tambah Obat',
+            'title'  => 'Tambah Obat Baru',
             'item'   => null,
             'action' => route('obat/store')
         ]);
@@ -41,20 +57,22 @@ class ObatController extends Controller
 
         $data = $this->input();
         if ($error = $this->validate($data)) {
+            set_old($_POST);
             flash('error', $error);
             $this->redirect('/index.php?url=obat/create');
         }
 
         try {
-            $this->obat->create($data);
+            $id = $this->obat->create($data);
         } catch (PDOException $e) {
-            flash('error', 'Kode obat sudah digunakan.');
+            set_old($_POST);
+            flash('error', 'Kode obat "' . $data['kode_obat'] . '" sudah terdaftar pada sistem. Harap gunakan kode unik lain.');
             $this->redirect('/index.php?url=obat/create');
         }
 
-        audit('Menambah obat: ' . $data['nama_obat']);
-        flash('success', 'Obat berhasil ditambahkan.');
-        $this->redirect('/index.php?url=obat');
+        audit('Menambah obat baru: ' . $data['nama_obat'] . ' (' . $data['kode_obat'] . ')');
+        flash('success', 'Obat "' . $data['nama_obat'] . '" berhasil ditambahkan.');
+        $this->redirect('/index.php?url=obat/show/' . $id);
     }
 
     public function edit($id = 0)
@@ -68,7 +86,7 @@ class ObatController extends Controller
         }
 
         $this->view('obat/form', [
-            'title'  => 'Edit Obat',
+            'title'  => 'Edit Data Obat: ' . $item['nama_obat'],
             'item'   => $item,
             'action' => route('obat/update/' . $item['id_obat'])
         ]);
@@ -82,6 +100,7 @@ class ObatController extends Controller
         $id = (int) $id;
         $data = $this->input();
         if ($error = $this->validate($data)) {
+            set_old($_POST);
             flash('error', $error);
             $this->redirect('/index.php?url=obat/edit/' . $id);
         }
@@ -89,13 +108,14 @@ class ObatController extends Controller
         try {
             $this->obat->update($id, $data);
         } catch (PDOException $e) {
-            flash('error', 'Kode obat sudah digunakan.');
+            set_old($_POST);
+            flash('error', 'Kode obat sudah digunakan oleh data obat lain.');
             $this->redirect('/index.php?url=obat/edit/' . $id);
         }
 
         audit('Mengubah obat: ' . $data['nama_obat']);
-        flash('success', 'Data obat berhasil diperbarui.');
-        $this->redirect('/index.php?url=obat');
+        flash('success', 'Data obat "' . $data['nama_obat'] . '" berhasil diperbarui.');
+        $this->redirect('/index.php?url=obat/show/' . $id);
     }
 
     public function delete($id = 0)
@@ -108,10 +128,12 @@ class ObatController extends Controller
             try {
                 $this->obat->delete($item['id_obat']);
                 audit('Menghapus obat: ' . $item['nama_obat']);
-                flash('success', 'Obat berhasil dihapus.');
-            } catch (PDOException $e) {
-                flash('error', 'Obat tidak dapat dihapus karena sudah dipakai pada resep.');
+                flash('success', 'Obat "' . $item['nama_obat'] . '" berhasil dihapus dari sistem.');
+            } catch (Throwable $e) {
+                flash('error', $e->getMessage());
             }
+        } else {
+            flash('error', 'Obat tidak ditemukan.');
         }
         $this->redirect('/index.php?url=obat');
     }

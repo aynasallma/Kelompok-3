@@ -15,9 +15,14 @@ class ResepController extends Controller
 
     public function index()
     {
+        $status = trim($_GET['status'] ?? '');
+        $statusFilter = in_array($status, ['Menunggu', 'Diserahkan', 'Batal'], true) ? $status : null;
+
         $this->view('resep/index', [
-            'title' => 'Resep',
-            'items' => $this->resep->all($this->doctorId())
+            'title'        => 'Daftar Resep',
+            'items'        => $this->resep->all($this->doctorId(), $statusFilter),
+            'statusFilter' => $statusFilter,
+            'countMenunggu' => $this->resep->countMenunggu()
         ]);
     }
 
@@ -30,7 +35,7 @@ class ResepController extends Controller
         }
 
         $this->view('resep/show', [
-            'title'  => 'Detail Resep',
+            'title'  => 'Detail Resep #' . (int) $item['id_resep'],
             'item'   => $item,
             'detail' => $this->resep->detail($item['id_resep'])
         ]);
@@ -67,43 +72,64 @@ class ResepController extends Controller
 
         $items = [];
         $listObat = $_POST['id_obat'] ?? [];
+        $adaKosong = false;
+
         foreach ($listObat as $i => $id_obat) {
             $id_obat = (int) $id_obat;
             $jumlah = (int) ($_POST['jumlah'][$i] ?? 0);
+            $dosis = trim($_POST['dosis'][$i] ?? '');
+            $aturan = trim($_POST['aturan_pakai'][$i] ?? '');
 
-            if ($id_obat <= 0 || $jumlah <= 0) {
+            if ($id_obat <= 0) {
                 continue;
+            }
+
+            if ($dosis === '' || $aturan === '' || $jumlah <= 0) {
+                $adaKosong = true;
             }
 
             $items[] = [
                 'id_obat'      => $id_obat,
-                'dosis'        => trim($_POST['dosis'][$i] ?? ''),
-                'aturan_pakai' => trim($_POST['aturan_pakai'][$i] ?? ''),
+                'dosis'        => $dosis,
+                'aturan_pakai' => $aturan,
                 'jumlah'       => $jumlah
             ];
         }
 
-        $lengkap = true;
-        foreach ($items as $item) {
-            if ($item['dosis'] === '' || $item['aturan_pakai'] === '') {
-                $lengkap = false;
-            }
+        if ($id_rm <= 0) {
+            set_old($_POST);
+            flash('error', 'Silakan pilih rekam medis terlebih dahulu.');
+            $this->redirect('/index.php?url=resep/create/' . $id_rm);
         }
 
-        if ($id_rm <= 0 || !strtotime($tanggal) || count($items) === 0 || !$lengkap) {
-            flash('error', 'Pilih rekam medis, lalu isi minimal satu obat lengkap dengan dosis, aturan pakai, dan jumlah.');
+        if (!strtotime($tanggal)) {
+            set_old($_POST);
+            flash('error', 'Format tanggal resep tidak valid.');
+            $this->redirect('/index.php?url=resep/create/' . $id_rm);
+        }
+
+        if (count($items) === 0) {
+            set_old($_POST);
+            flash('error', 'Masukkan minimal satu obat ke dalam resep.');
+            $this->redirect('/index.php?url=resep/create/' . $id_rm);
+        }
+
+        if ($adaKosong) {
+            set_old($_POST);
+            flash('error', 'Setiap obat harus dilengkapi dengan dosis, aturan pakai, dan jumlah minimal 1.');
             $this->redirect('/index.php?url=resep/create/' . $id_rm);
         }
 
         try {
             $id = $this->resep->create($id_rm, $tanggal, $items);
         } catch (Throwable $e) {
-            flash('error', 'Resep gagal disimpan. Periksa kembali data yang dimasukkan.');
+            set_old($_POST);
+            flash('error', $e->getMessage());
             $this->redirect('/index.php?url=resep/create/' . $id_rm);
         }
 
         audit('Membuat resep #' . $id);
-        flash('success', 'Resep berhasil dibuat.');
+        flash('success', 'Resep #' . $id . ' berhasil dibuat dan menunggu penyerahan oleh apoteker.');
         $this->redirect('/index.php?url=resep/show/' . $id);
     }
 
@@ -116,10 +142,17 @@ class ResepController extends Controller
         try {
             $this->resep->serahkan($id);
             audit('Menyerahkan obat resep #' . $id);
-            flash('success', 'Obat diserahkan dan stok berhasil dikurangi.');
+            flash('success', 'Obat untuk resep #' . $id . ' berhasil diserahkan kepada pasien dan stok obat telah dikurangi.');
         } catch (Throwable $e) {
             flash('error', $e->getMessage());
         }
+
+        // Jika diserahkan dari tabel daftar resep, kembalikan ke daftar resep
+        $referer = $_SERVER['HTTP_REFERER'] ?? '';
+        if ($referer && strpos($referer, 'url=resep') !== false && strpos($referer, 'url=resep/show') === false && strpos($referer, 'url=resep/create') === false) {
+            $this->redirect('/index.php?url=resep');
+        }
+
         $this->redirect('/index.php?url=resep/show/' . $id);
     }
 

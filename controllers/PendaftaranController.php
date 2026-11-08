@@ -72,6 +72,7 @@ class PendaftaranController extends Controller
 
         $data = $this->input();
         if ($error = $this->validate($data)) {
+            set_old($_POST);
             flash('error', $error);
             $this->redirect('/index.php?url=pendaftaran');
         }
@@ -96,7 +97,7 @@ class PendaftaranController extends Controller
         $lookup = $_SESSION['registration_lookup_status'] ?? null;
         $this->view('pendaftaran/status', [
             'title' => 'Status Pendaftaran | Klinik Sehat',
-            'activeNav' => 'pendaftaran',
+            'activeNav' => 'status',
             'confirmation' => is_string($confirmation) ? $confirmation : null,
             'lookupStatus' => is_array($lookup) ? ($lookup['status'] ?? null) : null,
             'prescriptionStatus' => is_array($lookup) ? ($lookup['status_resep'] ?? null) : null,

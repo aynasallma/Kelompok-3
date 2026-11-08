@@ -32,12 +32,22 @@ class RekamMedisController extends Controller
             $this->redirect('/index.php?url=rekam_medis');
         }
 
-        $resep = new Resep();
+        $resepModel = new Resep();
+        $resepList = $resepModel->byRekamMedis($item['id_rekam_medis']);
+        $resepDenganDetail = [];
+        foreach ($resepList as $r) {
+            $r['items'] = $resepModel->detail($r['id_resep']);
+            $resepDenganDetail[] = $r;
+        }
+
+        // Riwayat rekam medis pasien sebelumnya untuk timeline
+        $riwayatPasien = $this->rekamMedis->byPasien($item['id_pasien'], $this->doctorId());
 
         $this->view('rekam_medis/show', [
-            'title' => 'Detail Rekam Medis',
-            'item'  => $item,
-            'resep' => $resep->byRekamMedis($item['id_rekam_medis'])
+            'title'         => 'Rekam Medis: ' . $item['nama_pasien'] . ' (' . $item['no_rm'] . ')',
+            'item'          => $item,
+            'resep'         => $resepDenganDetail,
+            'riwayatPasien' => $riwayatPasien
         ]);
     }
 
@@ -88,6 +98,7 @@ class RekamMedisController extends Controller
             die('Kunjungan ini tidak ditugaskan kepada akun Anda.');
         }
         if ($data['id_kunjungan'] <= 0 || $data['keluhan'] === '' || $data['diagnosa'] === '') {
+            set_old($_POST);
             flash('error', 'Kunjungan, keluhan, dan diagnosa wajib diisi.');
             $this->redirect('/index.php?url=rekam_medis/create');
         }
@@ -95,6 +106,7 @@ class RekamMedisController extends Controller
         try {
             $id = $this->rekamMedis->create($data);
         } catch (PDOException $e) {
+            set_old($_POST);
             flash('error', 'Rekam medis untuk kunjungan ini sudah ada atau kunjungan tidak valid.');
             $this->redirect('/index.php?url=rekam_medis/create');
         }
@@ -133,6 +145,7 @@ class RekamMedisController extends Controller
         $data = $this->input();
 
         if ($data['keluhan'] === '' || $data['diagnosa'] === '') {
+            set_old($_POST);
             flash('error', 'Keluhan dan diagnosa wajib diisi.');
             $this->redirect('/index.php?url=rekam_medis/edit/' . $id);
         }

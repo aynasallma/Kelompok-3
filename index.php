@@ -4,6 +4,7 @@ require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/core/Database.php';
 require_once __DIR__ . '/core/Model.php';
 require_once __DIR__ . '/core/Controller.php';
+require_once __DIR__ . '/core/Icon.php';
 require_once __DIR__ . '/vendor/autoload.php';
 
 header('X-Content-Type-Options: nosniff');
@@ -12,6 +13,11 @@ header('Referrer-Policy: strict-origin-when-cross-origin');
 header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
 
 /* ---------- Helper global ---------- */
+
+function icon($name, $class = '', $size = 18, $strokeWidth = 2)
+{
+    return Icon::render($name, $class, $size, $strokeWidth);
+}
 
 function e($value)
 {
@@ -139,6 +145,27 @@ function flash($key, $message = null)
     $value = $_SESSION['flash'][$key] ?? null;
     unset($_SESSION['flash'][$key]);
     return $value;
+}
+
+function set_old(array $data)
+{
+    // Hindari menyimpan password ke session old
+    unset($data['password'], $data['password_lama'], $data['password_baru'], $data['konfirmasi_password'], $data['csrf']);
+    $_SESSION['old'] = $data;
+}
+
+function old($key, $default = '')
+{
+    return $_SESSION['old'][$key] ?? $default;
+}
+
+function clear_old()
+{
+    unset($_SESSION['old']);
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && empty($_SESSION['flash']['error'])) {
+    clear_old();
 }
 
 function audit($aktivitas)

@@ -3,11 +3,43 @@
 class RekamMedis extends Model
 {
         private $select = "SELECT rm.*, k.tanggal_kunjungan, k.poli, k.no_antrian, k.id_dokter,
-                      d.nama AS nama_dokter, p.id_pasien, p.nama_pasien, p.no_rm
+                      d.nama AS nama_dokter, p.id_pasien, p.nama_pasien, p.no_rm,
+                      p.jenis_kelamin, p.tanggal_lahir, p.no_hp, p.alamat
                        FROM rekam_medis rm
                        JOIN kunjungan k ON k.id_kunjungan = rm.id_kunjungan
                     LEFT JOIN users d ON d.id_user = k.id_dokter
                        JOIN pasien p ON p.id_pasien = k.id_pasien";
+
+    public function countAll()
+    {
+        return (int) $this->db->query("SELECT COUNT(*) FROM rekam_medis")->fetchColumn();
+    }
+
+    public function countByDoctor($doctorId)
+    {
+        $stmt = $this->db->prepare(
+            "SELECT COUNT(*) FROM rekam_medis rm
+             JOIN kunjungan k ON k.id_kunjungan = rm.id_kunjungan
+             WHERE k.id_dokter = ?"
+        );
+        $stmt->execute([(int) $doctorId]);
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function riwayatTerbaru($limit = 5, $doctorId = null)
+    {
+        $limit = (int) $limit;
+        $sql = $this->select;
+        $params = [];
+        if ($doctorId !== null) {
+            $sql .= ' WHERE k.id_dokter = ?';
+            $params[] = (int) $doctorId;
+        }
+        $sql .= " ORDER BY rm.id_rekam_medis DESC LIMIT {$limit}";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
 
     public function all($search = '', $doctorId = null)
     {
